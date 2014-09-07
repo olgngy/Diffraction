@@ -635,6 +635,7 @@ void LaserEnv::motionClicked() {
    QImage imgLattice;
    drawCircularLattice(len);
    char fileName[64];
+   vector<double> meanValuesIter;
    for (int iter = 0; iter < iterSpectrum; iter++) {
         vector<cc> meanValues;
         imgLattice = drawCircularLattice(len);
@@ -715,7 +716,14 @@ void LaserEnv::motionClicked() {
           swap(meanValues[j], meanValues[j+meanValues.size()/2]);
 
        }
-
+       if (iter == 0 ) {
+           for (int i = 0; i < meanValues.size(); i++)
+               meanValuesIter.push_back(abs(meanValues[i]));
+       }
+       else {
+           for (int i = 0; i < meanValues.size(); i++)
+               meanValuesIter[i] += abs(meanValues[i]);
+       }
        sprintf(fileName, "MotionDFT-%d.txt", iter);
        freopen(fileName, "wt", stdout);
        for (int i = 0; i < meanValues.size(); i++)
@@ -723,6 +731,22 @@ void LaserEnv::motionClicked() {
        puts("");
        fflush(stdout);
    }
+
+   for (int i = 0; i < meanValuesIter.size(); i++) {
+       meanValuesIter[i] /= iterSpectrum;
+   }
+   double maxValue = *max_element(meanValuesIter.begin(), meanValuesIter.end());
+   for (int i = 0; i < meanValuesIter.size(); i++) {
+       meanValuesIter[i] /= maxValue;
+   }
+
+   sprintf(fileName, "MotionDFTResult.txt");
+   freopen(fileName, "wt", stdout);
+   for (int i = 0; i < meanValuesIter.size(); i++)
+      printf("%.12lf\n", meanValuesIter[i]);
+   puts("");
+   fflush(stdout);
+
 //   QImage spectrumImage = writeSpectrumImage(meanValues);
 //   spectrumImage.save("!Motion-SPECTRUM.png", "png");
    QLabel* imageLabel = new QLabel();
