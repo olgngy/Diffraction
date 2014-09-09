@@ -198,22 +198,38 @@ QImage LaserEnv::drawCircularLattice(int canvasWidth) {
    for (int i = 0; i < n; i++)
       for (int j = 0; j < canvasWidth; j++)
          ret.setPixel(j, i, 0);
-   vector<int> p1(n), p2(canvasWidth), circ;
-   for (int i = 0; i < n; i++)
-      p1[i] = i;
-   for (int i = 0; i < canvasWidth; i++)
-      p2[i] = i;
-   //random_shuffle(p1.begin(), p1.end());
-   //random_shuffle(p2.begin(), p2.end());
-   for (int i = 0; i < n; i++)
-      for (int j = 0; j < canvasWidth; j++)
-         processCircleCenter(ret, p1[i], p2[j], circ);
+   int R = sz;
+   int delta = sz/2;
+   int I = 2*R + delta;
+   int k = 0;
    QPainter painter(&ret);
    painter.setBrush(QBrush(Qt::white));
-   for (int i = 0; i < (int)circ.size(); i+=3) {
-      int I = circ[i], J = circ[i+1], R = circ[i+2];
-      painter.drawEllipse(J-R, I-R, 2*R, 2*R);
+   for (int i = 0; i < n; i+=I) {
+       int ini = 0;
+       if (k%2 == 1)
+           ini = -R - delta;
+       for (int j = ini; j < n; j+=I) {
+         painter.drawEllipse(j, i, 2*R, 2*R);
+       }
+       k++;
    }
+
+//   vector<int> p1(n), p2(canvasWidth), circ;
+//   for (int i = 0; i < n; i++)
+//      p1[i] = i;
+//   for (int i = 0; i < canvasWidth; i++)
+//      p2[i] = i;
+//   //random_shuffle(p1.begin(), p1.end());
+//   //random_shuffle(p2.begin(), p2.end());
+//   for (int i = 0; i < n; i++)
+//      for (int j = 0; j < canvasWidth; j++)
+//         processCircleCenter(ret, p1[i], p2[j], circ);
+//   QPainter painter(&ret);
+//   painter.setBrush(QBrush(Qt::white));
+//   for (int i = 0; i < (int)circ.size(); i+=3) {
+//      int I = circ[i], J = circ[i+1], R = circ[i+2];
+//      painter.drawEllipse(J-R, I-R, 2*R, 2*R);
+//   }
    return ret;
 }
 
@@ -785,7 +801,7 @@ LaserEnv::LaserEnv(QWidget* obj)
    : QWidget(obj), n(1024)
 {
    sz = 40;
-   w = 100;
+   w = 40;
    z = 1;
    deviation = 1;
    averageIterations = 5;
