@@ -196,20 +196,28 @@ void LaserEnv::processCircleCenter(QImage& img, int I, int J, vector<int>& circ)
 QImage LaserEnv::drawCircularLattice(int canvasWidth) {
    QImage ret = QImage(canvasWidth, n, QImage::Format_Mono);
    for (int i = 0; i < n; i++)
-      for (int j = 0; j < canvasWidth; j++)
+      for (int j = 0; j < canvasWidth; j++) {
          ret.setPixel(j, i, 0);
+         if (j < 0 || i < 0) {
+             printf("Problem 1: I = %d   J = %d \n", i, j);
+         }
+      }
    int R = sz;
-   int delta = sz/2;
+   int delta = 4*sz;
    int I = 2*R + delta;
    int k = 0;
+   int x = 0;
    QPainter painter(&ret);
    painter.setBrush(QBrush(Qt::white));
    for (int i = 0; i < n; i+=I) {
        int ini = 0;
        if (k%2 == 1)
-           ini = -R - delta;
-       for (int j = ini; j < n; j+=I) {
+           ini = - R - delta;
+       for (int j = ini; j < canvasWidth; j+=I) {
          painter.drawEllipse(j, i, 2*R, 2*R);
+         x = rand()%(4*sz);
+         j += x;
+         //cout << delta + x << endl;
        }
        k++;
    }
@@ -375,7 +383,12 @@ QImage LaserEnv::write(const table& t) {
          double a = abs(t[i][j]);
          double v = log(a*a + 10*deviation);
          int col = ((v-mini)/(maxi-mini))*255;
+         if (col < 0)
+             col = 0;
          ret.setPixel(j, i, col);
+         if (j < 0 || i < 0 || col < 0) {
+             printf("Problem 2: I = %d   J = %d  Col = %d \n", i, j, col);
+         }
          //printf("%d ", col);
       }
    return ret;
@@ -647,7 +660,7 @@ void LaserEnv::motionClicked() {
    generateClicked();
    table tabRay = generateBaseRay();
    QImage imgRay = write(tabRay);
-   int len = n + 1024;
+   int len = n + n;
    QImage imgLattice;
    drawCircularLattice(len);
    char fileName[64];
@@ -655,7 +668,7 @@ void LaserEnv::motionClicked() {
    for (int iter = 0; iter < iterSpectrum; iter++) {
         vector<cc> meanValues;
         imgLattice = drawCircularLattice(len);
-        //imgLattice.save("Lattice1.bmp", "bmp");
+        imgLattice.save("Lattice1.bmp", "bmp");
         //int i11 = 20;
 
         for (int shift = 0, it = 0; shift < len - n; shift += motionSpeed, it++) {
@@ -666,6 +679,9 @@ void LaserEnv::motionClicked() {
                     QRgb rgb = imgLattice.pixel(j+shift, i);
                     bool black = !qRed(rgb) && !qGreen(rgb) && !qBlue(rgb);
                     curLattice.setPixel(j, i, !black);
+                    if (j < 0 || i < 0) {
+                        printf("Problem 3: I = %d   J = %d \n", i, j);
+                    }
                 }
             table tabLattice = read(curLattice);
             table tabDiffraction = multiplyTables(tabRay, tabLattice);
@@ -727,7 +743,14 @@ void LaserEnv::motionClicked() {
        printf("Standard deviation / Mean = %.12lf\n", DV/MV);
        printf("Mean / Standard deviation = %.12lf\n", MV/DV);
        */
-       fftrec(meanValues, false);
+        sprintf(fileName, "Motion-%d.txt", iter);
+        freopen(fileName, "wt", stdout);
+        for (int i = 0; i < meanValues.size(); i++)
+           printf("%.12lf\n", abs(meanValues[i]));
+        puts("");
+        fflush(stdout);
+
+        fftrec(meanValues, false);
        for (int j = 0; j < meanValues.size()/2; j++) {
           swap(meanValues[j], meanValues[j+meanValues.size()/2]);
 
@@ -800,16 +823,16 @@ QImage LaserEnv::writeSpectrumImage(const vector<cc>& row) {
 LaserEnv::LaserEnv(QWidget* obj)
    : QWidget(obj), n(1024)
 {
-   sz = 40;
-   w = 40;
+   sz = 15;
+   w = 15;
    z = 1;
    deviation = 1;
    averageIterations = 5;
    motionSpeed = 1;
-   frameX = 600;
-   frameY = 600;
-   frameHeight = 100;
-   frameWidth = 100;
+   frameX = 511;
+   frameY = 511;
+   frameHeight = 512;
+   frameWidth = 512;
    iterSpectrum = 1;
    createGUIControls();
    setupGUIControls();
